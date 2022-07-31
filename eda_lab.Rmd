@@ -1,0 +1,152 @@
+---
+title: "R Notebook"
+output:
+  html_notebook: default
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+# se importan las librerias que se usaran
+library(tidyverse)
+library(funModeling)
+library(ggplot2)
+
+```
+
+```{r}
+# se crea el dataframe con los datos del archivo .CSV
+df_vacunacion = read_delim("covid.csv",delim=",")
+```
+```{r}
+# se ven los primeros 6 registros
+head(df_vacunacion)
+```
+
+```{r}
+# se ven los ultimos 6 registros
+tail(df_vacunacion)
+```
+
+```{r}
+# se ven los tipos de datos
+sapply(df_vacunacion,class)
+```
+
+```{r}
+dim(df_vacunacion)
+```
+
+```{r}
+# al haber 17 columnas, se eliminaran algunas que se consideren irrelevantes
+df_vacunacion = subset(df_vacunacion,select=-c(jurisdiccion_residencia_id,depto_residencia_id,jurisdiccion_aplicacion_id,depto_aplicacion_id,cod_dosis_generica))
+```
+
+```{r}
+dim(df_vacunacion) # se eliminaron 5 columnas
+```
+
+```{r}
+# cambiar nombre de columnas
+df_vacunacion = rename(df_vacunacion,edad=grupo_etario,residencia=jurisdiccion_residencia,localidad=depto_residencia,residencia_aplicacion=jurisdiccion_aplicacion,localidad_aplicacion=depto_aplicacion)
+
+```
+
+```{r}
+sapply(df_vacunacion,class)
+```
+
+```{r}
+# cantidad de registros duplicados
+sum(duplicated(df_vacunacion))
+```
+
+```{r}
+# valores nulos
+df_vacunacion[is.na(df_vacunacion)]
+```
+
+```{r}
+# analisis univariado var numerica
+profiling_num(df_vacunacion)
+```
+
+```{r}
+# analisis univariado var categorica
+freq(df_vacunacion)
+```
+
+```{r}
+ggplot(data=df_vacunacion,aes(y=orden_dosis)) + 
+  geom_boxplot() + 
+  theme_light() +
+  ggtitle('Plot con outliers')
+  
+```
+
+```{r}
+ggplot(data=df_vacunacion,aes(y=orden_dosis)) + 
+  geom_boxplot(outlier.shape = NA) + 
+  theme_light() +
+  scale_y_continuous(limits = quantile(df_vacunacion$orden_dosis, c(0.1, 0.9)))+
+  ggtitle('Plot sin outliers')
+
+
+
+```
+```{r}
+require(scales)
+ggplot(data=df_vacunacion,aes(x=forcats::fct_infreq(vacuna)))+
+  geom_bar()+
+  scale_y_continuous(labels = comma)+
+  theme_light() +
+  xlab("")+
+  ylab("")
+  
+```
+```{r}
+datos = df_vacunacion %>% count(fecha_aplicacion)
+ggplot(data=datos,aes(x=datos$fecha_aplicacion,y=datos$n))+
+  geom_line()+
+  scale_x_date(date_breaks='1 month',guide = guide_axis(n.dodge = 2))+
+  theme_light() +
+  xlab("")+
+  ylab("")
+
+  
+```
+
+
+
+
+
+```{r}
+# nuevo df
+porcentaje <- df_vacunacion %>% 
+                group_by(sexo) %>% 
+                count() %>% 
+                ungroup() %>% 
+                mutate(percentage=`n`/sum(`n`) * 100) 
+
+#grafico
+ggplot(porcentaje, aes(x=1, y=percentage, fill=sexo)) +
+        geom_bar(stat="identity") +
+        geom_text(aes(label = paste0(round(percentage,1),"%")), 
+                  position = position_stack(vjust = 0.5)) +
+        coord_polar(theta = "y") + 
+        theme_void()
+
+
+```
+
+
+
+
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
